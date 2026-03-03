@@ -1,0 +1,17 @@
+  Determining projects to restore...
+  All projects are up-to-date for restore.
+C:\Users\vignesh.k\mssql to pg\EpayDbMigrator\MigrationService.cs(38,75): warning CS8625: Cannot convert null literal to non-nullable reference type. [C:\Users\vignesh.k\mssql to pg\EpayDbMigrator\EpayDbMigrator.csproj]
+C:\Users\vignesh.k\mssql to pg\EpayDbMigrator\Program.cs(58,44): error CS1729: 'MigrationService' does not contain a constructor that takes 3 arguments [C:\Users\vignesh.k\mssql to pg\EpayDbMigrator\EpayDbMigrator.csproj]
+C:\Users\vignesh.k\mssql to pg\EpayDbMigrator\Program.cs(75,74): warning CS8600: Converting null literal or possible null value to non-nullable type. [C:\Users\vignesh.k\mssql to pg\EpayDbMigrator\EpayDbMigrator.csproj]
+C:\Users\vignesh.k\mssql to pg\EpayDbMigrator\Program.cs(106,58): warning CS8604: Possible null reference argument for parameter 'selectedTables' in 'Task MigrationService.RunMigrationAsync(List<string> selectedTables = null)'. [C:\Users\vignesh.k\mssql to pg\EpayDbMigrator\EpayDbMigrator.csproj]
+
+Build FAILED.
+
+C:\Users\vignesh.k\mssql to pg\EpayDbMigrator\MigrationService.cs(38,75): warning CS8625: Cannot convert null literal to non-nullable reference type. [C:\Users\vignesh.k\mssql to pg\EpayDbMigrator\EpayDbMigrator.csproj]
+C:\Users\vignesh.k\mssql to pg\EpayDbMigrator\Program.cs(75,74): warning CS8600: Converting null literal or possible null value to non-nullable type. [C:\Users\vignesh.k\mssql to pg\EpayDbMigrator\EpayDbMigrator.csproj]
+C:\Users\vignesh.k\mssql to pg\EpayDbMigrator\Program.cs(106,58): warning CS8604: Possible null reference argument for parameter 'selectedTables' in 'Task MigrationService.RunMigrationAsync(List<string> selectedTables = null)'. [C:\Users\vignesh.k\mssql to pg\EpayDbMigrator\EpayDbMigrator.csproj]
+C:\Users\vignesh.k\mssql to pg\EpayDbMigrator\Program.cs(58,44): error CS1729: 'MigrationService' does not contain a constructor that takes 3 arguments [C:\Users\vignesh.k\mssql to pg\EpayDbMigrator\EpayDbMigrator.csproj]
+    3 Warning(s)
+    1 Error(s)
+
+Time Elapsed 00:00:00.92
