@@ -33,6 +33,7 @@ jobs:
       - name: Deploy to EC2 Windows
         shell: pwsh
         run: |
+          winrm set winrm/config/client '@{TrustedHosts="*"}'
           winrm set winrm/config/client '@{AllowUnencrypted="true"}'
       
           $password = ConvertTo-SecureString "${{ secrets.EC2_PASSWORD }}" -AsPlainText -Force
