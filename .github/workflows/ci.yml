@@ -16,7 +16,7 @@ jobs:
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: 8.0.x
+          dotnet-version: 10.0.x
 
       - name: Restore
         run: dotnet restore
@@ -26,49 +26,41 @@ jobs:
 
       - name: Run Tests with Coverage
         run: dotnet test --configuration Release --collect:"XPlat Code Coverage"
-      
+
       - name: Publish Application
-        run: dotnet publish -c Release -o publish
-     
+        run: dotnet publish -c Release -o publish --no-build
+
       - name: Deploy to EC2 Windows
-        uses: nttld/setup-winrm@v1
-        with:
-          hostname: ${{ secrets.EC2_HOST }}
-          username: ${{ secrets.EC2_USER }}
-          password: ${{ secrets.EC2_PASSWORD }}
-          port: 5985
-          script: |
-            if (!(Test-Path "C:\apps\epay")) {
-              New-Item -ItemType Directory -Path "C:\apps\epay"
-            }
+        shell: pwsh
+        run: |
+          $password = ConvertTo-SecureString "${{ secrets.EC2_PASSWORD }}" -AsPlainText -Force
+          $cred = New-Object System.Management.Automation.PSCredential ("${{ secrets.EC2_USER }}", $password)
 
-      - name: Copy files to EC2
-        uses: appleboy/scp-action@v1
-        with:
-          host: ${{ secrets.EC2_HOST }}
-          username: ${{ secrets.EC2_USER }}
-          password: ${{ secrets.EC2_PASSWORD }}
-          source: "publish/*"
-          target: "C:/apps/epay"
+          $session = New-PSSession -ComputerName "${{ secrets.EC2_HOST }}" -Credential $cred -Port 5985
 
-      - name: Run application
-        uses: appleboy/ssh-action@v1
-        with:
-          host: ${{ secrets.EC2_HOST }}
-          username: ${{ secrets.EC2_USER }}
-          password: ${{ secrets.EC2_PASSWORD }}
-          script: |
-            cd C:\apps\epay
-            EpayDbMigrator.exe
-          
+          Invoke-Command -Session $session -ScriptBlock {
+              if (!(Test-Path "C:\apps\epay")) {
+                  New-Item -ItemType Directory -Path "C:\apps\epay"
+              }
+          }
+
+          Copy-Item -Path publish\* -Destination C:\apps\epay -Recurse -ToSession $session
+
+          Invoke-Command -Session $session -ScriptBlock {
+              cd C:\apps\epay
+              Start-Process "EpayDbMigrator.exe"
+          }
+
+          Remove-PSSession $session
+
       - name: Upload Build Artifact
         uses: actions/upload-artifact@v4
         with:
           name: application-build
           path: publish
-          
+
       - name: Upload Coverage Report
         uses: actions/upload-artifact@v4
         with:
           name: coverage-report
-          path: 'TestResults'
+          path: TestResults
