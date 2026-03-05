@@ -1,4 +1,4 @@
-name: .NET CI
+name: .NET CI (Local Runner)
 
 on:
   push:
@@ -8,20 +8,21 @@ on:
 
 jobs:
   build:
-    runs-on: windows-latest
+    runs-on: [self-hosted, windows]
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout Code
+        uses: actions/checkout@v4
 
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: 10.0.x
 
-      - name: Restore
+      - name: Restore Dependencies
         run: dotnet restore
 
-      - name: Build
+      - name: Build Application
         run: dotnet build --configuration Release --no-restore
 
       - name: Run Tests with Coverage
@@ -30,38 +31,12 @@ jobs:
       - name: Publish Application
         run: dotnet publish -c Release -o publish --no-build
 
-      - name: Deploy to EC2 Windows
+      - name: Run Application Locally
         shell: pwsh
         run: |
-          winrm set winrm/config/client '@{TrustedHosts="*"}'
-          winrm set winrm/config/client '@{AllowUnencrypted="true"}'
-      
-          $password = ConvertTo-SecureString "${{ secrets.EC2_PASSWORD }}" -AsPlainText -Force
-          $cred = New-Object System.Management.Automation.PSCredential ("${{ secrets.EC2_USER }}", $password)
-      
-          $sessionOptions = New-PSSessionOption -SkipCACheck -SkipCNCheck -SkipRevocationCheck
-      
-          $session = New-PSSession `
-            -ComputerName "${{ secrets.EC2_HOST }}" `
-            -Credential $cred `
-            -Port 5985 `
-            -Authentication Basic `
-            -SessionOption $sessionOptions
-      
-          Invoke-Command -Session $session -ScriptBlock {
-              if (!(Test-Path "C:\apps\epay")) {
-                  New-Item -ItemType Directory -Path "C:\apps\epay"
-              }
-          }
-      
-          Copy-Item -Path publish\* -Destination C:\apps\epay -Recurse -ToSession $session
-      
-          Invoke-Command -Session $session -ScriptBlock {
-              cd C:\apps\epay
-              Start-Process "EpayDbMigrator.exe"
-          }
-      
-          Remove-PSSession $session
+          Write-Host "Running application from CI runner..."
+          cd publish
+          .\EpayDbMigrator.exe
 
       - name: Upload Build Artifact
         uses: actions/upload-artifact@v4
