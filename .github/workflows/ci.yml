@@ -1,4 +1,4 @@
-name: .NET CI
+name: .NET CI/CD
 
 on:
   push:
@@ -7,6 +7,8 @@ on:
     branches: [ main ]
 
 jobs:
+
+# ---------------- BUILD JOB ----------------
   build:
     runs-on: windows-latest
 
@@ -24,59 +26,67 @@ jobs:
       - name: Build
         run: dotnet build --configuration Release --no-restore
 
-      - name: Run Tests with Coverage
-        run: dotnet test --configuration Release --collect:"XPlat Code Coverage"
+      - name: Run Tests
+        run: dotnet test --configuration Release
 
       - name: Publish Application
         run: dotnet publish -c Release -o publish --no-build
 
+      - name: Upload Build Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-build
+          path: publish
+
+
+# ---------------- DEPLOY JOB ----------------
+  deploy:
+    needs: build
+    runs-on: windows-latest
+
+    steps:
+
+      - name: Download Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: app-build
+          path: publish
+
       - name: Deploy to EC2 Windows
         shell: pwsh
         run: |
+
           winrm set winrm/config/client '@{TrustedHosts="*"}'
           winrm set winrm/config/client '@{AllowUnencrypted="true"}'
-      
+
           $password = ConvertTo-SecureString "${{ secrets.EC2_PASSWORD }}" -AsPlainText -Force
           $cred = New-Object System.Management.Automation.PSCredential ("${{ secrets.EC2_USER }}", $password)
-      
+
           $sessionOptions = New-PSSessionOption -SkipCACheck -SkipCNCheck -SkipRevocationCheck
-      
+
           $session = New-PSSession `
             -ComputerName "${{ secrets.EC2_HOST }}" `
             -Credential $cred `
             -Port 5985 `
             -Authentication Basic `
             -SessionOption $sessionOptions
-      
+
           Invoke-Command -Session $session -ScriptBlock {
-      
-              # Stop existing app if running
+
               Get-Process EpayDbMigrator -ErrorAction SilentlyContinue | Stop-Process -Force
-      
+
               if (!(Test-Path "C:\apps\epay")) {
                   New-Item -ItemType Directory -Path "C:\apps\epay"
               } else {
                   Remove-Item "C:\apps\epay\*" -Recurse -Force
               }
           }
-      
+
           Copy-Item -Path publish\* -Destination C:\apps\epay -Recurse -Force -ToSession $session
-      
+
           Invoke-Command -Session $session -ScriptBlock {
               cd C:\apps\epay
               Start-Process "EpayDbMigrator.exe"
           }
-      
-          Remove-PSSession $session
-          
-      - name: Upload Build Artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: application-build
-          path: publish
 
-      - name: Upload Coverage Report
-        uses: actions/upload-artifact@v4
-        with:
-          name: coverage-report
-          path: TestResults
+          Remove-PSSession $session
