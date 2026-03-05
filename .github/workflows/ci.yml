@@ -36,7 +36,11 @@ jobs:
           $password = ConvertTo-SecureString "${{ secrets.EC2_PASSWORD }}" -AsPlainText -Force
           $cred = New-Object System.Management.Automation.PSCredential ("${{ secrets.EC2_USER }}", $password)
 
-          $session = New-PSSession -ComputerName "${{ secrets.EC2_HOST }}" -Credential $cred -Port 5985
+          $session = New-PSSession `
+            -ComputerName "${{ secrets.EC2_HOST }}" `
+            -Credential $cred `
+            -Port 5985 `
+            -Authentication Basic
 
           Invoke-Command -Session $session -ScriptBlock {
               if (!(Test-Path "C:\apps\epay")) {
