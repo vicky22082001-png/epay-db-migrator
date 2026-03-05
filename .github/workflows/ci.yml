@@ -31,21 +31,4 @@ jobs:
       - name: Publish Application
         run: dotnet publish -c Release -o publish --no-build
 
-      - name: Run Application Locally
-        shell: pwsh
-        run: |
-          Write-Host "Running application from CI runner..."
-          cd publish
-          .\EpayDbMigrator.exe
-
-      - name: Upload Build Artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: application-build
-          path: publish
-
-      - name: Upload Coverage Report
-        uses: actions/upload-artifact@v4
-        with:
-          name: coverage-report
-          path: TestResults
+   
