@@ -29,13 +29,41 @@ jobs:
       
       - name: Publish Application
         run: dotnet publish -c Release -o publish
-        
+     
+      - name: Deploy to EC2 Windows
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          password: ${{ secrets.EC2_PASSWORD }}
+          script: |
+            mkdir C:\apps\epay
+
+      - name: Copy files to EC2
+        uses: appleboy/scp-action@v1
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          password: ${{ secrets.EC2_PASSWORD }}
+          source: "publish/*"
+          target: "C:/apps/epay"
+
+      - name: Run application
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          password: ${{ secrets.EC2_PASSWORD }}
+          script: |
+            cd C:\apps\epay
+            EpayDbMigrator.exe
+          
       - name: Upload Build Artifact
         uses: actions/upload-artifact@v4
         with:
           name: application-build
           path: publish
-        
+          
       - name: Upload Coverage Report
         uses: actions/upload-artifact@v4
         with:
