@@ -33,31 +33,33 @@ jobs:
       - name: Deploy to EC2 Windows
         shell: pwsh
         run: |
+          winrm set winrm/config/client '@{AllowUnencrypted="true"}'
+      
           $password = ConvertTo-SecureString "${{ secrets.EC2_PASSWORD }}" -AsPlainText -Force
           $cred = New-Object System.Management.Automation.PSCredential ("${{ secrets.EC2_USER }}", $password)
-
+      
           $sessionOptions = New-PSSessionOption -SkipCACheck -SkipCNCheck -SkipRevocationCheck
-
+      
           $session = New-PSSession `
             -ComputerName "${{ secrets.EC2_HOST }}" `
             -Credential $cred `
             -Port 5985 `
             -Authentication Basic `
             -SessionOption $sessionOptions
-
+      
           Invoke-Command -Session $session -ScriptBlock {
               if (!(Test-Path "C:\apps\epay")) {
                   New-Item -ItemType Directory -Path "C:\apps\epay"
               }
           }
-
+      
           Copy-Item -Path publish\* -Destination C:\apps\epay -Recurse -ToSession $session
-
+      
           Invoke-Command -Session $session -ScriptBlock {
               cd C:\apps\epay
               Start-Process "EpayDbMigrator.exe"
           }
-
+      
           Remove-PSSession $session
 
       - name: Upload Build Artifact
