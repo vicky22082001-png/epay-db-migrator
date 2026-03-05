@@ -31,13 +31,16 @@ jobs:
         run: dotnet publish -c Release -o publish
      
       - name: Deploy to EC2 Windows
-        uses: appleboy/ssh-action@v1
+        uses: nttld/setup-winrm@v1
         with:
-          host: ${{ secrets.EC2_HOST }}
+          hostname: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USER }}
           password: ${{ secrets.EC2_PASSWORD }}
+          port: 5985
           script: |
-            mkdir C:\apps\epay
+            if (!(Test-Path "C:\apps\epay")) {
+              New-Item -ItemType Directory -Path "C:\apps\epay"
+            }
 
       - name: Copy files to EC2
         uses: appleboy/scp-action@v1
